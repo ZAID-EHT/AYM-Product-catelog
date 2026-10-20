@@ -1,0 +1,11 @@
+node_modules/
+dist/
+__pycache__/
+*.tsbuildinfo
+test-results/
+.vite/
+.vercel/
+.env
+.env.*
+!.env.example
+*.log

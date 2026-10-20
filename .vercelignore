@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.git/
+images/
+AYM_Products.xlsx
+reports/
+test-results/
+tests/
+scripts/
+__pycache__/
+*.tsbuildinfo
+*.log
