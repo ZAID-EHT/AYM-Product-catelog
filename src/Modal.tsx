@@ -5,11 +5,13 @@ export function Modal({
   close,
   children,
   wide = false,
+  fullscreen = false,
 }: {
   title: string;
   close: () => void;
   children: ReactNode;
   wide?: boolean;
+  fullscreen?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -27,7 +29,7 @@ export function Modal({
   return (
     <dialog
       ref={ref}
-      className={`sheet ${wide ? 'wide' : ''}`}
+      className={`sheet ${wide ? 'wide' : ''} ${fullscreen ? 'fullscreen' : ''}`}
       aria-labelledby="sheet-title"
       onCancel={(e) => {
         e.preventDefault();

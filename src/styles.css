@@ -5,8 +5,8 @@
   --safe-right: env(safe-area-inset-right, 0px);
 
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  color: #24332d;
-  background: #f6f5f2;
+  color: var(--ink);
+  background: var(--bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -276,11 +276,14 @@ main:focus {
   -webkit-user-select: none;
   isolation: isolate;
   aspect-ratio: 1;
+  overflow: hidden;
 }
 .photograph-frame.is-dragging {
   transition: none;
 }
 .photo-open {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
@@ -499,6 +502,7 @@ main:focus {
   gap: 7px;
   background: var(--surface);
   border: 1px solid var(--line);
+  color: var(--ink);
 }
 .action-button span {
   font-size: 0.625rem;
@@ -644,8 +648,8 @@ main:focus {
   gap: 6px;
   padding: 7px;
   border-radius: 28px;
-  border: 1px solid #ffffff80;
-  background: var(--glass);
+  border: 1px solid var(--line);
+  background: var(--surface);
   -webkit-backdrop-filter: blur(22px);
   backdrop-filter: blur(22px);
   box-shadow:
@@ -1337,7 +1341,7 @@ main:focus {
     min-height: 230px;
     width: 100%;
     box-shadow: 0 10px 32px #24372d08;
-    overflow: visible;
+    overflow: hidden;
   }
   .photo-open {
     border-radius: 22px;
@@ -1902,4 +1906,97 @@ main:focus {
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Reserve space for the phone tabs instead of covering the scrolling content. */
+@media (max-width: 700px) {
+  .app-shell {
+    height: 100dvh;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+  .viewer-page,
+  .collection-page {
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    padding-bottom: 24px;
+    min-height: 0;
+  }
+  .bottom-nav-wrap {
+    position: static;
+    padding: 12px 0 max(14px, var(--safe-bottom));
+    background: var(--bg);
+  }
+  .bottom-nav > button {
+    font-size: 0.75rem;
+  }
+  .action-button span {
+    font-size: 0.6875rem;
+  }
+}
+
+/* Use the visible viewport, including Safari toolbar changes and safe areas. */
+.sheet.fullscreen {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  padding: max(16px, var(--safe-top)) max(16px, var(--safe-right)) max(16px, var(--safe-bottom))
+    max(16px, var(--safe-left));
+}
+.sheet.fullscreen[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.fullscreen .sheet-handle {
+  display: none;
+}
+.fullscreen .sheet-heading {
+  margin: 0;
+  flex-shrink: 0;
+}
+.zoom-product-name {
+  margin: 0;
+  font-size: 1.125rem;
+  line-height: 1.35;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  max-height: 25dvh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+.fullscreen .zoom-toolbar {
+  margin: 0;
+  flex-shrink: 0;
+}
+.fullscreen .zoom-viewport {
+  flex: 1 1 auto;
+  min-height: 80px;
+  height: auto;
+}
+.fullscreen .zoom-footer {
+  flex-shrink: 0;
+  margin: 0;
+}
+.zoom-product-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+  text-align: center;
+}
+.zoom-product-controls > div {
+  font-size: 0.8125rem;
+}
+.zoom-product-controls p {
+  margin-top: 4px;
+  font-size: 0.6875rem;
+  color: var(--muted);
 }

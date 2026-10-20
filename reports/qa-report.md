@@ -2,6 +2,12 @@
 
 Date: 20 October 2026 (Asia/Colombo)
 
+## iPhone layout and fullscreen browsing correction
+
+Corrected the root foreground/background to use the active theme, so dark-mode text and icons no longer inherit light-mode ink. Pinned the photograph button inside its constrained frame to prevent Safari percentage-height overflow into the product name. Phone tabs occupy their own layout row below scrolling content, with safe-area spacing and larger Save/Share/tab labels. Fullscreen now displays the product name and position, supports left-to-next/right-to-previous swipes, keyboard and visible product arrows, and resets zoom when changing products. At increased zoom, dragging continues to pan instead of navigating. Home persistence and exploration isolation are preserved.
+
+Validation against the production build: 18 unit/import tests, all 25 existing Chromium/WebKit browser workflow checks, focused numeric Jump/pinch and photo-and-name-only sharing regressions, and the new `npm run test:mobile` checks pass. Mobile checks cover light/dark colors, photo containment, separate tabs at 393 × 620/650/852, simulated 59px top/34px bottom safe areas, Save and actual PNG downloads, fullscreen names/swipes/arrows/keyboard/boundaries, zoom/pan isolation, viewport resizing, and the longest real product name at 150% text size. No uncaught runtime errors were observed. Screenshots are in `test-results/`. These are browser emulations, not physical iPhone or real native share-sheet tests.
+
 Swipe preference update: left now advances to the next product; right returns to the previous product. The hint, drag boundary resistance and transition direction match. Production build and all 18 unit/import tests pass. `npm run test:swipe` passes in Chromium and WebKit, including both directions, first/last boundaries, vertical-scroll rejection, reload persistence and preserved Home position. Evidence: `test-results/swipe-results.json`.
 
 Export preference update: downloaded/shared images now contain only the product photo and full name. Prices, codes, branding and all other added text are excluded. The updated production build, all 18 unit/import tests, and focused export tests in Chromium and WebKit pass. The saved preference is in the project `AGENTS.md`. Earlier full-workflow results below remain evidence for unchanged catalogue features; export assertions in the test suite were updated to this new requirement.

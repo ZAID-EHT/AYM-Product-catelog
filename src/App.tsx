@@ -164,7 +164,7 @@ function CatalogueApp({ catalogue }: { catalogue: Catalogue }) {
   const [jumpValue, setJumpValue] = useState('');
   const [jumpError, setJumpError] = useState('');
   const [shareTarget, setShareTarget] = useState<Product | null>(null);
-  const [zoomImage, setZoomImage] = useState<{ product: Product; photo: number } | null>(null);
+  const [zoomImage, setZoomImage] = useState<{ photo: number } | null>(null);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [dragX, setDragX] = useState(0);
@@ -306,6 +306,7 @@ function CatalogueApp({ catalogue }: { catalogue: Catalogue }) {
   }, [product.id, photoIndex, isViewer]);
   useEffect(() => {
     mainRef.current?.focus({ preventScroll: true });
+    mainRef.current?.scrollTo({ top: 0 });
   }, [route.section, route.detailId]);
 
   function toggleSave(p: Product) {
@@ -543,7 +544,7 @@ function CatalogueApp({ catalogue }: { catalogue: Catalogue }) {
                     aria-label={`Enlarge photograph of ${product.name}`}
                     onClick={() => {
                       if (!wasDragged.current && product.images.length)
-                        setZoomImage({ product, photo: photoIndex });
+                        setZoomImage({ photo: photoIndex });
                     }}
                     disabled={!product.images.length}
                   >
@@ -556,7 +557,7 @@ function CatalogueApp({ catalogue }: { catalogue: Catalogue }) {
                     <button
                       className="expand-button icon-button"
                       aria-label="Expand product image"
-                      onClick={() => setZoomImage({ product, photo: photoIndex })}
+                      onClick={() => setZoomImage({ photo: photoIndex })}
                     >
                       <Expand size={19} />
                     </button>
@@ -1020,8 +1021,12 @@ function CatalogueApp({ catalogue }: { catalogue: Catalogue }) {
       )}
       {zoomImage && (
         <ZoomSheet
-          product={zoomImage.product}
+          product={product}
           initial={zoomImage.photo}
+          hasPrevious={hasPrevious}
+          hasNext={hasNext}
+          move={move}
+          position={`${(isHome ? homeIndex : collectionIndex) + 1} / ${collection.length.toLocaleString()}`}
           close={() => setZoomImage(null)}
         />
       )}
@@ -1165,22 +1170,66 @@ function ZoomSheet({
   product,
   initial,
   close,
+  hasPrevious,
+  hasNext,
+  move,
+  position,
 }: {
   product: Product;
   initial: number;
   close: () => void;
+  hasPrevious: boolean;
+  hasNext: boolean;
+  move: (step: number) => void;
+  position: string;
 }) {
   const [photo, setPhoto] = useState(initial);
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const pinch = useRef<{ distance: number; scale: number } | null>(null);
+  const swipe = useRef<{ x: number; y: number; start: number } | null>(null);
+  const lastProduct = useRef(product.id);
+  useEffect(() => {
+    if (lastProduct.current === product.id) return;
+    lastProduct.current = product.id;
+    setPhoto(0);
+    setScale(1);
+    setOffset({ x: 0, y: 0 });
+    pointers.current.clear();
+    pinch.current = null;
+    swipe.current = null;
+  }, [product.id]);
+  useEffect(() => {
+    const keyboard = (event: KeyboardEvent) => {
+      if (event.altKey || event.ctrlKey || event.metaKey) return;
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        event.preventDefault();
+        move(event.key === 'ArrowRight' ? 1 : -1);
+      }
+    };
+    window.addEventListener('keydown', keyboard);
+    return () => window.removeEventListener('keydown', keyboard);
+  }, [move]);
   function end(e: PointerEvent) {
+    const start = swipe.current;
+    swipe.current = null;
+    if (e.type === 'pointerup' && start && scale === 1 && pointers.current.size === 1) {
+      const step = swipeDirection(
+        e.clientX - start.x,
+        e.clientY - start.y,
+        performance.now() - start.start,
+      );
+      if (step) move(step);
+    }
     pointers.current.delete(e.pointerId);
     pinch.current = null;
   }
   return (
-    <Modal title="A closer look" close={close} wide>
+    <Modal title="A closer look" close={close} wide fullscreen>
+      <h3 className="zoom-product-name" data-testid="fullscreen-product-name" aria-live="polite">
+        {product.name}
+      </h3>
       <div className="zoom-toolbar">
         <button
           className="icon-button soft"
@@ -1215,7 +1264,13 @@ function ZoomSheet({
       <div
         className="zoom-viewport"
         onPointerDown={(e) => {
+          if (e.pointerType === 'mouse' && e.button !== 0) return;
           pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          swipe.current =
+            pointers.current.size === 1 && scale === 1
+              ? { x: e.clientX, y: e.clientY, start: performance.now() }
+              : null;
+          if (pointers.current.size > 1) pinch.current = null;
           e.currentTarget.setPointerCapture(e.pointerId);
         }}
         onPointerMove={(e) => {
@@ -1252,33 +1307,57 @@ function ZoomSheet({
           <Photo image={product.images[photo]} name={product.name} priority />
         </div>
       </div>
-      <div className="zoom-footer">
+      {product.images.length > 1 && (
+        <div className="zoom-footer">
+          <button
+            className="icon-button soft"
+            aria-label="Previous zoom photo"
+            disabled={photo === 0}
+            onClick={() => {
+              setPhoto((p) => p - 1);
+              setScale(1);
+              setOffset({ x: 0, y: 0 });
+            }}
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <span>
+            {photo + 1} / {product.images.length} · Pinch or use + to zoom
+          </span>
+          <button
+            className="icon-button soft"
+            aria-label="Next zoom photo"
+            disabled={photo === product.images.length - 1}
+            onClick={() => {
+              setPhoto((p) => p + 1);
+              setScale(1);
+              setOffset({ x: 0, y: 0 });
+            }}
+          >
+            <ChevronRight size={20} />
+          </button>
+        </div>
+      )}
+      <div className="zoom-product-controls">
         <button
           className="icon-button soft"
-          aria-label="Previous zoom photo"
-          disabled={photo === 0}
-          onClick={() => {
-            setPhoto((p) => p - 1);
-            setScale(1);
-            setOffset({ x: 0, y: 0 });
-          }}
+          aria-label="Previous fullscreen product"
+          disabled={!hasPrevious}
+          onClick={() => move(-1)}
         >
-          <ChevronLeft size={20} />
+          <ChevronLeft size={24} />
         </button>
-        <span>
-          {photo + 1} / {product.images.length} · Pinch or use + to zoom
-        </span>
+        <div>
+          <span aria-live="polite">{position}</span>
+          <p>Swipe left for next · right for previous</p>
+        </div>
         <button
           className="icon-button soft"
-          aria-label="Next zoom photo"
-          disabled={photo === product.images.length - 1}
-          onClick={() => {
-            setPhoto((p) => p + 1);
-            setScale(1);
-            setOffset({ x: 0, y: 0 });
-          }}
+          aria-label="Next fullscreen product"
+          disabled={!hasNext}
+          onClick={() => move(1)}
         >
-          <ChevronRight size={20} />
+          <ChevronRight size={24} />
         </button>
       </div>
     </Modal>

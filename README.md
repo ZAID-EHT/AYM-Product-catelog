@@ -70,7 +70,8 @@ The Share button opens a preview while generating the PNG. After it is prepared,
 ## iPhone, accessibility and offline use
 
 - Optimized at 393 × 852 CSS pixels, with safe-area insets, `viewport-fit=cover`, dynamic viewport units, semantic buttons, 44px targets, focus management, native dialog trapping, reduced motion and automatic light/dark colors.
-- Tap the photo to open fullscreen viewing. Pinch or use the zoom controls; drag to pan. Native page zoom remains enabled outside the photo zoom modal.
+- Tap the photo to open fullscreen viewing with the product's full name. Swipe left for the next product and right for the previous product, or use the visible arrows and keyboard. At more than 100% zoom, dragging pans the image instead of changing products; pinch or use the zoom controls. Changing products resets image zoom. Native page zoom remains enabled outside the photo zoom modal.
+- On phones, the header and bottom tabs have reserved space around a scrolling content area. Product names and Save/Share controls stay separate from the photograph, including in dark mode and when Safari's toolbars reduce the visible viewport.
 - In Safari, Share → Add to Home Screen installs the PWA. HTTPS is required on a phone for the service worker and native file-sharing APIs. HTTP `localhost`/`127.0.0.1` is a secure-context exception on the development computer; a phone visiting a LAN HTTP address is not.
 - The production service worker caches the app shell and catalogue, then keeps at most **80 photo requests** using bounded recent-use caching. It does not precache all 2,220 photos. Previously opened images can work offline; unseen images show the photograph-unavailable state until connected.
 - App shell updates are fetched online. A newly installed worker waits for existing tabs to close before activation, so a future version does not replace assets beneath an open session. Close/reopen all AYM tabs after publishing a new application version. The dataset is requested network-first on each load, with offline fallback.
@@ -88,6 +89,7 @@ npm run test:e2e
 npm run test:regression
 npm run test:share
 npm run test:swipe
+npm run test:mobile
 ```
 
 `npm test` runs TypeScript behavior tests and Python importer/source-integrity tests. Python verifies all 2,274 source rows, every image association, missing/duplicate reporting, actual source SHA-256 checksums, and strict/fallback matching. TypeScript covers search (including 50,000 entries), gesture intent, price precision, corrupt/blocked storage and native file-sharing detection.
@@ -99,6 +101,8 @@ The focused regression command also verifies numeric SKU/workbook number collisi
 `npm run test:share` verifies photo-and-name-only exports in Chromium and WebKit, including actual PNG downloads, native file payloads, long names, missing photos, and retention of prices/codes on the website.
 
 `npm run test:swipe` checks left-to-next and right-to-previous navigation, catalogue boundaries, vertical-scroll rejection, on-screen hints and progress persistence in Chromium and WebKit.
+
+`npm run test:mobile` checks light/dark foregrounds, photo containment, separate bottom navigation at 393px widths and 620/650/852px heights, simulated safe areas, Save and PNG download, fullscreen names, swipes, keyboard/arrows, boundaries, pan isolation, resizing and independent Home progress in Chromium and WebKit. Screenshots are emulation evidence; physical iPhone testing remains a separate check.
 
 **No physical iPhone Safari or actual operating-system share sheet was tested.** WebKit automation on Windows approximates Safari’s rendering engine but is not a device test. Device-level safe areas, keyboard behavior, suspension, installation and share destinations still merit a real iPhone pass before a public launch.
 
