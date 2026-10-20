@@ -256,6 +256,7 @@ main:focus {
   background: var(--accent);
 }
 .product-stage {
+  touch-action: pan-y pinch-zoom;
   display: grid;
   grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
   gap: 70px;
@@ -295,8 +296,9 @@ main:focus {
 .photo-open:active:not(:disabled) {
   transform: none;
 }
-.photo-open:disabled {
+.photo-open[aria-disabled='true'] {
   opacity: 1;
+  cursor: default;
 }
 .photo-transition {
   width: 100%;
@@ -1959,6 +1961,14 @@ main:focus {
 .fullscreen .sheet-heading {
   margin: 0;
   flex-shrink: 0;
+}
+.zoom-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 12px;
+  touch-action: pan-y;
 }
 .zoom-product-name {
   margin: 0;

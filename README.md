@@ -52,6 +52,7 @@ Fallback rows explicitly explain that the main current price was not supplied. I
 ## Browsing, progress and Saved
 
 - Exactly one product is shown in the main viewer. **Swipe left = next; swipe right = previous.** Drag the photo, use the visible arrows, or press the keyboard arrow keys. Vertical scrolling, two-finger gestures and screen-edge gestures are excluded from product swipes.
+- Finger swipes work across the product photograph, name and details, and across the fullscreen photograph/name area. Touch navigation uses its own non-passive move/end listeners, so a cancelled pointer stream cannot drop the release. Controls keep their normal taps, vertical gestures scroll, and zoomed fullscreen images pan. Listeners reattach when the viewer returns from Search or Saved.
 - Main Home progress is written synchronously after each navigation to `aym.home.v1` in localStorage. It stores the stable product ID, previous index and catalogue version. The visible product is restored exactly; after navigating forward 100 times from product 1, it reopens on product 101.
 - Unique valid SKUs are stable IDs; duplicated, missing or placeholder SKUs use the workbook `No`. Reordering preserves unique SKU progress. If a product disappears, the old index is clamped to an appropriate remaining position. Changing a duplicate SKU into a unique SKU can change its identity; preserve `No` and SKU where possible.
 - Search, Saved details, direct product URLs and Jump are exploration views. They **never write Home’s browsing position**. Home always returns to the original place. Back restores search results and input; browser Back is supported. In Jump, plain numbers mean workbook product numbers; use `sku:600` for a numeric SKU. Duplicate SKU matches require a product number or selection through Search.
@@ -91,6 +92,7 @@ npm run test:regression
 npm run test:share
 npm run test:swipe
 npm run test:mobile
+npm run test:touch
 ```
 
 `npm test` runs TypeScript behavior tests and Python importer/source-integrity tests. Python verifies all 2,274 source rows, every image association, missing/duplicate reporting, actual source SHA-256 checksums, and strict/fallback matching. TypeScript covers search (including 50,000 entries), gesture intent, price precision, corrupt/blocked storage and native file-sharing detection.
@@ -104,6 +106,8 @@ The focused regression command also verifies numeric SKU/workbook number collisi
 `npm run test:swipe` checks left-to-next and right-to-previous navigation, catalogue boundaries, vertical-scroll rejection, on-screen hints and progress persistence in Chromium and WebKit.
 
 `npm run test:mobile` checks light/dark foregrounds, photo containment, separate bottom navigation at 393px widths and 620/650/852px heights, simulated safe areas, Save and PNG download, fullscreen names, swipes, keyboard/arrows, boundaries, pan isolation, resizing and independent Home progress in Chromium and WebKit. Screenshots are emulation evidence; physical iPhone testing remains a separate check.
+
+`npm run test:touch` adds browser-dispatched Chromium finger gestures and synthetic Touch Events fallback checks in Chromium/WebKit. It covers both directions on photos/names/details, pointer cancellation, vertical scrolling, returning from Search/Saved, missing photos, fullscreen, zoom isolation and boundaries. Synthetic WebKit checks exercise the touch handler directly; they are not physical Safari touch tests.
 
 **No physical iPhone Safari or actual operating-system share sheet was tested.** WebKit automation on Windows approximates Safari’s rendering engine but is not a device test. Device-level safe areas, keyboard behavior, suspension, installation and share destinations still merit a real iPhone pass before a public launch.
 

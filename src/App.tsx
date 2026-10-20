@@ -57,6 +57,7 @@ import {
 } from './persistence';
 import { canShareFile, downloadCard, generateProductCard, nativeShare, productUrl } from './share';
 import { Modal } from './Modal';
+import { useProductSwipe } from './useProductSwipe';
 
 function Photo({
   image,
@@ -383,6 +384,7 @@ function CatalogueApp({ catalogue }: { catalogue: Catalogue }) {
     return () => window.removeEventListener('keydown', keyboard);
   }, [move, anyModal]);
   function pointerDown(e: PointerEvent<HTMLDivElement>) {
+    if (e.pointerType === 'touch') return;
     if (!e.isPrimary) {
       gesture.current = null;
       setDragX(0);
@@ -407,6 +409,7 @@ function CatalogueApp({ catalogue }: { catalogue: Catalogue }) {
     };
   }
   function pointerMove(e: PointerEvent<HTMLDivElement>) {
+    if (e.pointerType === 'touch') return;
     const g = gesture.current;
     if (!g || g.id !== e.pointerId) return;
     const dx = e.clientX - g.x,
@@ -424,6 +427,7 @@ function CatalogueApp({ catalogue }: { catalogue: Catalogue }) {
     if (g.locked) setDragX(dx * ((dx < 0 && !hasNext) || (dx > 0 && !hasPrevious) ? 0.15 : 0.65));
   }
   function pointerEnd(e: PointerEvent<HTMLDivElement>) {
+    if (e.pointerType === 'touch') return;
     const g = gesture.current;
     gesture.current = null;
     setDragX(0);
@@ -431,10 +435,18 @@ function CatalogueApp({ catalogue }: { catalogue: Catalogue }) {
       const step = swipeDirection(e.clientX - g.x, e.clientY - g.y, performance.now() - g.start);
       if (step) move(step);
     }
-    window.setTimeout(() => {
-      wasDragged.current = false;
-    }, 100);
   }
+  const productSwipeRef = useProductSwipe<HTMLElement>({
+    enabled: isViewer && !anyModal,
+    onSwipe: move,
+    onStart: () => {
+      wasDragged.current = false;
+    },
+    onMove: () => {
+      wasDragged.current = true;
+    },
+    onDrag: (dx) => setDragX(dx * ((dx < 0 && !hasNext) || (dx > 0 && !hasPrevious) ? 0.15 : 0.65)),
+  });
   function showSection(section: Section) {
     navigate({ section, detailId: null });
     setCategory('');
@@ -542,7 +554,7 @@ function CatalogueApp({ catalogue }: { catalogue: Catalogue }) {
                 <ChevronRight size={14} />
               </button>
             </div>
-            <section className="product-stage" aria-label="Product viewer">
+            <section ref={productSwipeRef} className="product-stage" aria-label="Product viewer">
               <div className="photograph-column">
                 <div
                   className={`photograph-frame ${dragX ? 'is-dragging' : ''}`}
@@ -569,7 +581,7 @@ function CatalogueApp({ catalogue }: { catalogue: Catalogue }) {
                       if (!wasDragged.current && product.images.length)
                         setZoomImage({ photo: photoIndex });
                     }}
-                    disabled={!product.images.length}
+                    aria-disabled={!product.images.length}
                   >
                     <div key={`${product.id}-${photoIndex}`} className="photo-transition">
                       <Photo image={product.images[photoIndex]} name={product.name} priority />
@@ -1241,6 +1253,10 @@ function ZoomSheet({
   const pinch = useRef<{ distance: number; scale: number } | null>(null);
   const swipe = useRef<{ x: number; y: number; start: number } | null>(null);
   const lastProduct = useRef(product.id);
+  const swipeRef = useProductSwipe<HTMLDivElement>({
+    enabled: active && scale === 1,
+    onSwipe: move,
+  });
   useEffect(() => {
     if (lastProduct.current === product.id) return;
     lastProduct.current = product.id;
@@ -1266,7 +1282,13 @@ function ZoomSheet({
   function end(e: PointerEvent) {
     const start = swipe.current;
     swipe.current = null;
-    if (e.type === 'pointerup' && start && scale === 1 && pointers.current.size === 1) {
+    if (
+      e.pointerType !== 'touch' &&
+      e.type === 'pointerup' &&
+      start &&
+      scale === 1 &&
+      pointers.current.size === 1
+    ) {
       const step = swipeDirection(
         e.clientX - start.x,
         e.clientY - start.y,
@@ -1279,155 +1301,164 @@ function ZoomSheet({
   }
   return (
     <Modal title="A closer look" close={close} wide fullscreen>
-      <div className="zoom-product-heading">
-        <h3 className="zoom-product-name" data-testid="fullscreen-product-name" aria-live="polite">
-          {product.name}
-        </h3>
-        <div className="product-actions">
-          <button
-            className={`action-button ${saved ? 'is-saved' : ''}`}
-            aria-label={saved ? 'Remove from Saved' : 'Save product'}
-            aria-pressed={saved}
-            onClick={save}
+      <div ref={swipeRef} className="zoom-content">
+        <div className="zoom-product-heading">
+          <h3
+            className="zoom-product-name"
+            data-testid="fullscreen-product-name"
+            aria-live="polite"
           >
-            <Bookmark size={20} fill={saved ? 'currentColor' : 'none'} />
-            <span>{saved ? 'Saved' : 'Save'}</span>
+            {product.name}
+          </h3>
+          <div className="product-actions">
+            <button
+              className={`action-button ${saved ? 'is-saved' : ''}`}
+              aria-label={saved ? 'Remove from Saved' : 'Save product'}
+              aria-pressed={saved}
+              onClick={save}
+            >
+              <Bookmark size={20} fill={saved ? 'currentColor' : 'none'} />
+              <span>{saved ? 'Saved' : 'Save'}</span>
+            </button>
+            <button className="action-button" aria-label="Share product" onClick={share}>
+              <Share2 size={20} />
+              <span>Share</span>
+            </button>
+          </div>
+        </div>
+        <div className="zoom-toolbar">
+          <button
+            className="icon-button soft"
+            aria-label="Zoom out"
+            disabled={scale <= 1}
+            onClick={() => {
+              setScale((s) => Math.max(1, s - 0.5));
+              setOffset({ x: 0, y: 0 });
+            }}
+          >
+            <ZoomOut size={20} />
           </button>
-          <button className="action-button" aria-label="Share product" onClick={share}>
-            <Share2 size={20} />
-            <span>Share</span>
+          <span>{Math.round(scale * 100)}%</span>
+          <button
+            className="icon-button soft"
+            aria-label="Zoom in"
+            disabled={scale >= 4}
+            onClick={() => setScale((s) => Math.min(4, s + 0.5))}
+          >
+            <ZoomIn size={20} />
+          </button>
+          <button
+            className="text-button"
+            onClick={() => {
+              setScale(1);
+              setOffset({ x: 0, y: 0 });
+            }}
+          >
+            Reset
           </button>
         </div>
-      </div>
-      <div className="zoom-toolbar">
-        <button
-          className="icon-button soft"
-          aria-label="Zoom out"
-          disabled={scale <= 1}
-          onClick={() => {
-            setScale((s) => Math.max(1, s - 0.5));
-            setOffset({ x: 0, y: 0 });
-          }}
-        >
-          <ZoomOut size={20} />
-        </button>
-        <span>{Math.round(scale * 100)}%</span>
-        <button
-          className="icon-button soft"
-          aria-label="Zoom in"
-          disabled={scale >= 4}
-          onClick={() => setScale((s) => Math.min(4, s + 0.5))}
-        >
-          <ZoomIn size={20} />
-        </button>
-        <button
-          className="text-button"
-          onClick={() => {
-            setScale(1);
-            setOffset({ x: 0, y: 0 });
-          }}
-        >
-          Reset
-        </button>
-      </div>
-      <div
-        className="zoom-viewport"
-        onPointerDown={(e) => {
-          if (e.pointerType === 'mouse' && e.button !== 0) return;
-          pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-          swipe.current =
-            pointers.current.size === 1 && scale === 1
-              ? { x: e.clientX, y: e.clientY, start: performance.now() }
-              : null;
-          if (pointers.current.size > 1) pinch.current = null;
-          e.currentTarget.setPointerCapture(e.pointerId);
-        }}
-        onPointerMove={(e) => {
-          const old = pointers.current.get(e.pointerId);
-          if (!old) return;
-          pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-          const touches = [...pointers.current.values()];
-          if (touches.length === 2) {
-            const distance = Math.hypot(touches[0].x - touches[1].x, touches[0].y - touches[1].y);
-            if (!pinch.current) pinch.current = { distance, scale };
-            else
-              setScale(
-                Math.max(1, Math.min(4, (pinch.current.scale * distance) / pinch.current.distance)),
-              );
-          } else if (scale > 1)
-            setOffset((o) => ({
-              x: Math.max(-1000, Math.min(1000, o.x + e.clientX - old.x)),
-              y: Math.max(-1000, Math.min(1000, o.y + e.clientY - old.y)),
-            }));
-        }}
-        onPointerUp={end}
-        onPointerCancel={end}
-        onDoubleClick={() => {
-          setScale((s) => (s === 1 ? 2 : 1));
-          setOffset({ x: 0, y: 0 });
-        }}
-      >
         <div
-          className="zoom-image"
-          style={{
-            transform: `translate(${scale === 1 ? 0 : offset.x}px, ${scale === 1 ? 0 : offset.y}px) scale(${scale})`,
+          className="zoom-viewport"
+          onPointerDown={(e) => {
+            if (e.pointerType === 'mouse' && e.button !== 0) return;
+            pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            swipe.current =
+              pointers.current.size === 1 && scale === 1
+                ? { x: e.clientX, y: e.clientY, start: performance.now() }
+                : null;
+            if (pointers.current.size > 1) pinch.current = null;
+            e.currentTarget.setPointerCapture(e.pointerId);
+          }}
+          onPointerMove={(e) => {
+            const old = pointers.current.get(e.pointerId);
+            if (!old) return;
+            pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            const touches = [...pointers.current.values()];
+            if (touches.length === 2) {
+              const distance = Math.hypot(touches[0].x - touches[1].x, touches[0].y - touches[1].y);
+              if (!pinch.current) pinch.current = { distance, scale };
+              else
+                setScale(
+                  Math.max(
+                    1,
+                    Math.min(4, (pinch.current.scale * distance) / pinch.current.distance),
+                  ),
+                );
+            } else if (scale > 1)
+              setOffset((o) => ({
+                x: Math.max(-1000, Math.min(1000, o.x + e.clientX - old.x)),
+                y: Math.max(-1000, Math.min(1000, o.y + e.clientY - old.y)),
+              }));
+          }}
+          onPointerUp={end}
+          onPointerCancel={end}
+          onDoubleClick={() => {
+            setScale((s) => (s === 1 ? 2 : 1));
+            setOffset({ x: 0, y: 0 });
           }}
         >
-          <Photo image={product.images[photo]} name={product.name} priority />
-        </div>
-      </div>
-      {product.images.length > 1 && (
-        <div className="zoom-footer">
-          <button
-            className="icon-button soft"
-            aria-label="Previous zoom photo"
-            disabled={photo === 0}
-            onClick={() => {
-              setPhoto((p) => p - 1);
-              setScale(1);
-              setOffset({ x: 0, y: 0 });
+          <div
+            className="zoom-image"
+            style={{
+              transform: `translate(${scale === 1 ? 0 : offset.x}px, ${scale === 1 ? 0 : offset.y}px) scale(${scale})`,
             }}
           >
-            <ChevronLeft size={20} />
-          </button>
-          <span>
-            {photo + 1} / {product.images.length} · Pinch or use + to zoom
-          </span>
+            <Photo image={product.images[photo]} name={product.name} priority />
+          </div>
+        </div>
+        {product.images.length > 1 && (
+          <div className="zoom-footer">
+            <button
+              className="icon-button soft"
+              aria-label="Previous zoom photo"
+              disabled={photo === 0}
+              onClick={() => {
+                setPhoto((p) => p - 1);
+                setScale(1);
+                setOffset({ x: 0, y: 0 });
+              }}
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <span>
+              {photo + 1} / {product.images.length} · Pinch or use + to zoom
+            </span>
+            <button
+              className="icon-button soft"
+              aria-label="Next zoom photo"
+              disabled={photo === product.images.length - 1}
+              onClick={() => {
+                setPhoto((p) => p + 1);
+                setScale(1);
+                setOffset({ x: 0, y: 0 });
+              }}
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        )}
+        <div className="zoom-product-controls">
           <button
             className="icon-button soft"
-            aria-label="Next zoom photo"
-            disabled={photo === product.images.length - 1}
-            onClick={() => {
-              setPhoto((p) => p + 1);
-              setScale(1);
-              setOffset({ x: 0, y: 0 });
-            }}
+            aria-label="Previous fullscreen product"
+            disabled={!hasPrevious}
+            onClick={() => move(-1)}
           >
-            <ChevronRight size={20} />
+            <ChevronLeft size={24} />
+          </button>
+          <div>
+            <span aria-live="polite">{position}</span>
+            <p>Swipe left for next · right for previous</p>
+          </div>
+          <button
+            className="icon-button soft"
+            aria-label="Next fullscreen product"
+            disabled={!hasNext}
+            onClick={() => move(1)}
+          >
+            <ChevronRight size={24} />
           </button>
         </div>
-      )}
-      <div className="zoom-product-controls">
-        <button
-          className="icon-button soft"
-          aria-label="Previous fullscreen product"
-          disabled={!hasPrevious}
-          onClick={() => move(-1)}
-        >
-          <ChevronLeft size={24} />
-        </button>
-        <div>
-          <span aria-live="polite">{position}</span>
-          <p>Swipe left for next · right for previous</p>
-        </div>
-        <button
-          className="icon-button soft"
-          aria-label="Next fullscreen product"
-          disabled={!hasNext}
-          onClick={() => move(1)}
-        >
-          <ChevronRight size={24} />
-        </button>
       </div>
     </Modal>
   );

@@ -14,6 +14,7 @@
     "test:share": "python tests/share_export_test.py",
     "test:swipe": "python tests/swipe_test.py",
     "test:mobile": "python tests/mobile_viewer_test.py",
+    "test:touch": "python tests/touch_gesture_test.py",
     "check": "npm run test && npm run build",
     "format": "prettier --write src index.html vite.config.ts tsconfig.json package.json README.md public/sw.js public/manifest.webmanifest"
   },

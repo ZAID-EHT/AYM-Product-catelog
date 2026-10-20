@@ -2,6 +2,14 @@
 
 Date: 20 October 2026 (Asia/Colombo)
 
+## Finger swipe correction
+
+Reproduced failed browser-dispatched finger swipes on the main product name and fullscreen name: the original listeners covered only the photographs. Added a shared native Touch Events handler across the product/name/detail surfaces. Its horizontal move/end listeners are explicitly non-passive, independently of pointer capture/cancellation. Mouse/pen dragging remains separate to prevent double navigation. The handler leaves vertical scrolling, multi-touch, browser-edge gestures and control taps alone; fullscreen at increased zoom still pans. Listener attachment follows the actual surface node, including viewer remounts after Search/Saved. Missing-image photo surfaces also receive gestures, and a completed drag cannot produce a delayed expand-photo click.
+
+The new production `test:touch` suite passes browser-dispatched finger gestures in Chromium and synthetic Touch Events fallback streams in Chromium/WebKit, including pointer cancellation, both directions on names/photos/details, remounts, missing photos, boundaries and fullscreen zoom isolation. WebKit synthetic touch checks do not claim physical iPhone testing.
+
+The production build, all 18 unit/import checks, all 25 existing browser workflow checks, and focused swipe, mobile and numeric Jump/pinch regressions also pass. No uncaught application errors were observed. Formatting and whitespace checks pass.
+
 ## Default light theme and fullscreen actions
 
 Light mode now starts on a white background regardless of the device theme. The top options menu offers Light and Dark radio choices, persists an explicit choice under `aym.theme.v1`, applies it before paint, and updates browser chrome color. Save and Share are beside the fullscreen product name and follow the product reached by swipe or arrows. The share dialog returns to fullscreen; its keyboard handling cannot navigate the underlying viewer. Dialog labels are unique for the nested sharing flow.
