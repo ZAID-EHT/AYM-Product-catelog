@@ -2,6 +2,12 @@
 
 Date: 20 October 2026 (Asia/Colombo)
 
+## Default light theme and fullscreen actions
+
+Light mode now starts on a white background regardless of the device theme. The top options menu offers Light and Dark radio choices, persists an explicit choice under `aym.theme.v1`, applies it before paint, and updates browser chrome color. Save and Share are beside the fullscreen product name and follow the product reached by swipe or arrows. The share dialog returns to fullscreen; its keyboard handling cannot navigate the underlying viewer. Dialog labels are unique for the nested sharing flow.
+
+The production build, all 18 unit/import checks, focused sharing checks and mobile regressions pass in Chromium/WebKit. Added mobile checks verify a white default on dark-mode devices, remembered theme and chrome colors, fullscreen Save on the current product, a real downloaded PNG containing only that product's name/photo, and return from sharing without moving the viewer. Increased text size remains supported. Original photos/workbook are unchanged.
+
 ## iPhone layout and fullscreen browsing correction
 
 Corrected the root foreground/background to use the active theme, so dark-mode text and icons no longer inherit light-mode ink. Pinned the photograph button inside its constrained frame to prevent Safari percentage-height overflow into the product name. Phone tabs occupy their own layout row below scrolling content, with safe-area spacing and larger Save/Share/tab labels. Fullscreen now displays the product name and position, supports left-to-next/right-to-previous swipes, keyboard and visible product arrows, and resets zoom when changing products. At increased zoom, dragging continues to pan instead of navigating. Home persistence and exploration isolation are preserved.

@@ -229,9 +229,15 @@ def run_browser(playwright, name):
         page.screenshot(path=str(OUTPUT / f'{name}-{label}.png'), full_page=True)
     page.set_viewport_size({'width':393,'height':852})
     page.emulate_media(color_scheme='dark',reduced_motion='reduce')
+    page.get_by_role('button', name='Catalogue options').click()
+    page.get_by_role('radio', name='Dark', exact=True).check()
+    page.get_by_role('button', name='Close dialog', exact=True).click()
     page.screenshot(path=str(OUTPUT / f'{name}-iphone14pro-dark.png'),full_page=True)
     assert page.evaluate("getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()") == '#151b18'
     page.emulate_media(color_scheme='light')
+    page.get_by_role('button', name='Catalogue options').click()
+    page.get_by_role('radio', name='Light (default)', exact=True).check()
+    page.get_by_role('button', name='Close dialog', exact=True).click()
     # Simulate increased system text size; content may scroll but must remain usable.
     page.add_style_tag(content='html { font-size: 150%; }')
     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')

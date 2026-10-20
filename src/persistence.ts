@@ -1,6 +1,15 @@
 import type { Progress } from './types';
 export const PROGRESS_KEY = 'aym.home.v1';
 export const SAVED_KEY = 'aym.saved.v1';
+export const THEME_KEY = 'aym.theme.v1';
+export type Theme = 'light' | 'dark';
+export function readTheme(): Theme {
+  try {
+    return JSON.parse(localStorage.getItem(THEME_KEY) || 'null') === 'dark' ? 'dark' : 'light';
+  } catch {
+    return 'light';
+  }
+}
 export function readProgress(): Progress | null {
   try {
     const value: unknown = JSON.parse(localStorage.getItem(PROGRESS_KEY) || 'null');

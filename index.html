@@ -1,10 +1,20 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#f6f5f2" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#151b18" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" />
+    <script>
+      // Apply an explicit saved choice before paint; a new visitor always sees light.
+      try {
+        if (JSON.parse(localStorage.getItem('aym.theme.v1')) === 'dark') {
+          document.documentElement.dataset.theme = 'dark';
+          document.querySelector('meta[name="theme-color"]').content = '#151b18';
+        }
+      } catch {
+        /* Storage is optional. */
+      }
+    </script>
     <meta
       name="description"
       content="Explore the AYM product collection, save your favourites, and share beautiful product cards. Pick up exactly where you left off."

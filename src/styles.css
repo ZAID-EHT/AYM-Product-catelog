@@ -10,9 +10,9 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  color-scheme: light dark;
-  --bg: #f6f5f2;
-  --surface: #fffefa;
+  color-scheme: light;
+  --bg: #fff;
+  --surface: #f5f7f4;
   --ink: #24332d;
   --muted: #68726b;
   --green: #234e45;
@@ -1753,58 +1753,57 @@ main:focus {
     height: 45dvh;
   }
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #151b18;
-    --surface: #1f2822;
-    --ink: #e9eee8;
-    --muted: #a2afa4;
-    --green: #b2d0ba;
-    --accent: #31443a;
-    --line: #38443b;
-    --photo: #fff;
-    --glass: rgba(31, 40, 34, 0.9);
-    --shadow: 0 12px 40px #0002;
-    --danger: #ffb4b4;
-  }
-  .brand-word {
-    color: #c1d7c2;
-  }
-  .next-arrow,
-  .primary {
-    background: #b2d0ba;
-    color: #18271e;
-    border-color: #b2d0ba;
-  }
-  .primary:hover:not(:disabled),
-  .next-arrow:hover:not(:disabled) {
-    background: #d0e5d2;
-    color: #18271e;
-  }
-  .bottom-nav {
-    border-color: #54625266;
-    box-shadow: 0 10px 40px #0004;
-  }
-  .photo.is-placeholder {
-    --photo: #1f2822;
-  }
-  .photo-label {
-    background: #fffefae6;
-  }
-  .expand-button {
-    background: #fffefae8;
-    color: #234e45;
-  }
-  .placeholder {
-    background: var(--surface);
-  }
-  .share-preview {
-    background: #f6f5f2;
-  }
-  .loading-card {
-    background: linear-gradient(100deg, #223128, #31443a, #223128);
-    background-size: 200% 100%;
-  }
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #151b18;
+  --surface: #1f2822;
+  --ink: #e9eee8;
+  --muted: #a2afa4;
+  --green: #b2d0ba;
+  --accent: #31443a;
+  --line: #38443b;
+  --photo: #fff;
+  --glass: rgba(31, 40, 34, 0.9);
+  --shadow: 0 12px 40px #0002;
+  --danger: #ffb4b4;
+}
+:root[data-theme='dark'] .brand-word {
+  color: #c1d7c2;
+}
+:root[data-theme='dark'] .next-arrow,
+:root[data-theme='dark'] .primary {
+  background: #b2d0ba;
+  color: #18271e;
+  border-color: #b2d0ba;
+}
+:root[data-theme='dark'] .primary:hover:not(:disabled),
+:root[data-theme='dark'] .next-arrow:hover:not(:disabled) {
+  background: #d0e5d2;
+  color: #18271e;
+}
+:root[data-theme='dark'] .bottom-nav {
+  border-color: #54625266;
+  box-shadow: 0 10px 40px #0004;
+}
+:root[data-theme='dark'] .photo.is-placeholder {
+  --photo: #1f2822;
+}
+:root[data-theme='dark'] .photo-label {
+  background: #fffefae6;
+}
+:root[data-theme='dark'] .expand-button {
+  background: #fffefae8;
+  color: #234e45;
+}
+:root[data-theme='dark'] .placeholder {
+  background: var(--surface);
+}
+:root[data-theme='dark'] .share-preview {
+  background: #f6f5f2;
+}
+:root[data-theme='dark'] .loading-card {
+  background: linear-gradient(100deg, #223128, #31443a, #223128);
+  background-size: 200% 100%;
 }
 @media (max-width: 700px) and (orientation: portrait) {
   .topbar {
@@ -1999,4 +1998,66 @@ main:focus {
   margin-top: 4px;
   font-size: 0.6875rem;
   color: var(--muted);
+}
+
+.theme-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  border: 0;
+  padding: 0;
+  margin: 0 0 20px;
+  min-width: 0;
+}
+.theme-picker legend {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.theme-picker label {
+  display: flex;
+  flex: 1 1 140px;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 8px;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+.theme-picker input {
+  margin: 0;
+  accent-color: var(--green);
+}
+.theme-picker .selected {
+  color: var(--green);
+  border-color: var(--green);
+  background: var(--accent);
+}
+.zoom-product-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+.zoom-product-heading .zoom-product-name {
+  flex: 1;
+  min-width: 0;
+}
+.zoom-product-heading .product-actions {
+  align-self: flex-start;
+  flex-shrink: 0;
+}
+.fullscreen .action-button {
+  width: 48px;
+  min-height: 52px;
+  gap: 4px;
+  border-radius: 12px;
+}
+.fullscreen .action-button span {
+  font-size: 0.6875rem;
 }

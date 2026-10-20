@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 export function Modal({
   title,
@@ -14,6 +14,7 @@ export function Modal({
   fullscreen?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
   useEffect(() => {
     const dialog = ref.current!;
     const previous = document.activeElement as HTMLElement | null;
@@ -30,7 +31,7 @@ export function Modal({
     <dialog
       ref={ref}
       className={`sheet ${wide ? 'wide' : ''} ${fullscreen ? 'fullscreen' : ''}`}
-      aria-labelledby="sheet-title"
+      aria-labelledby={titleId}
       onCancel={(e) => {
         e.preventDefault();
         close();
@@ -50,7 +51,7 @@ export function Modal({
     >
       <div className="sheet-handle" />
       <div className="sheet-heading">
-        <h2 id="sheet-title">{title}</h2>
+        <h2 id={titleId}>{title}</h2>
         <button className="icon-button soft" aria-label="Close dialog" onClick={close}>
           <X size={20} />
         </button>

@@ -39,17 +39,22 @@ with sync_playwright() as playwright:
     for engine in ['chromium', 'webkit']:
         browser = getattr(playwright, engine).launch()
         context = browser.new_context(viewport={'width': 393, 'height': 650}, is_mobile=True,
-                                      has_touch=True, reduced_motion='reduce', accept_downloads=True)
+                                      has_touch=True, color_scheme='dark', reduced_motion='reduce', accept_downloads=True)
         page = context.new_page()
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(BASE)
         page.wait_for_load_state('networkidle')
+        expect(page.locator('html')).to_have_attribute('data-theme', 'light')
+        assert page.evaluate('getComputedStyle(document.documentElement).backgroundColor') == 'rgb(255, 255, 255)'
         # Both themes must use the actual foreground/background tokens, including
         # inherited icons. Safari's smaller browser viewport must never let the
         # photograph escape its frame or let the tabs cover the scrolling area.
         for theme in ['light', 'dark']:
             page.emulate_media(color_scheme=theme)
+            page.get_by_role('button', name='Catalogue options').click()
+            page.get_by_role('radio', name='Light (default)' if theme == 'light' else 'Dark', exact=True).check()
+            page.get_by_role('button', name='Close dialog', exact=True).click()
             for height in [620, 650, 852]:
                 page.set_viewport_size({'width': 393, 'height': height})
                 checks = page.evaluate('''() => {
@@ -68,11 +73,14 @@ with sync_playwright() as playwright:
                 }''')
                 assert all(checks[k] for k in ['imageFits', 'titleClear', 'navSeparate', 'navFits']), checks
                 assert checks['color'] == ('rgb(233, 238, 232)' if theme == 'dark' else 'rgb(36, 51, 45)'), checks
-                assert checks['background'] == ('rgb(21, 27, 24)' if theme == 'dark' else 'rgb(246, 245, 242)'), checks
+                assert checks['background'] == ('rgb(21, 27, 24)' if theme == 'dark' else 'rgb(255, 255, 255)'), checks
                 assert checks['saveColor'] == checks['color'], checks
                 assert checks['saveColor'] != checks['saveBackground'], checks
             page.set_viewport_size({'width': 393, 'height': 650})
             page.screenshot(path=str(OUT / f'{engine}-short-iphone-{theme}.png'))
+        page.reload()
+        expect(page.locator('html')).to_have_attribute('data-theme', 'dark')
+        assert page.locator('meta[name="theme-color"]').get_attribute('content') == '#151b18'
         page.add_style_tag(content=':root { --safe-top: 59px; --safe-bottom: 34px; }')
         nav = page.locator('.bottom-nav').bounding_box()
         assert nav['y'] + nav['height'] <= 650 - 34
@@ -90,6 +98,29 @@ with sync_playwright() as playwright:
         name(page, 0)
         swipe(page, engine, -110)
         name(page, 1)
+        fullscreen = page.get_by_role('dialog', name='A closer look', exact=True)
+        fullscreen.get_by_role('button', name='Save product', exact=True).click()
+        expect(fullscreen.get_by_role('button', name='Remove from Saved', exact=True)).to_have_attribute('aria-pressed', 'true')
+        assert PRODUCTS[1]['id'] in page.evaluate("JSON.parse(localStorage.getItem('aym.saved.v1'))")
+        page.evaluate('''() => {
+          window.__cardText = [];
+          const original = CanvasRenderingContext2D.prototype.fillText;
+          CanvasRenderingContext2D.prototype.fillText = function(text, ...args) {
+            window.__cardText.push(text); return original.call(this, text, ...args);
+          };
+        }''')
+        fullscreen.get_by_role('button', name='Share product', exact=True).click()
+        share = page.get_by_role('dialog', name='A good find, worth sharing.', exact=True)
+        expect(share.locator('.share-preview img')).to_have_attribute('alt', 'Product photograph and full name: ' + PRODUCTS[1]['name'])
+        with page.expect_download() as pending:
+            share.get_by_role('button', name='Download image', exact=True).click()
+        assert pending.value.suggested_filename.endswith('.png')
+        assert ' '.join(page.evaluate('window.__cardText')) == PRODUCTS[1]['name']
+        page.keyboard.press('ArrowRight')
+        name(page, 1)
+        page.keyboard.press('Escape')
+        expect(share).not_to_be_visible()
+        expect(fullscreen).to_be_visible()
         swipe(page, engine, 110)
         name(page, 0)
         swipe(page, engine, 5, 100)
@@ -139,6 +170,17 @@ with sync_playwright() as playwright:
         page.get_by_role('button', name='Expand product image').click()
         expect(page.get_by_test_id('fullscreen-product-name')).to_have_text(longest['name'])
         assert page.get_by_test_id('fullscreen-product-name').evaluate('(el)=>el.scrollWidth<=el.clientWidth')
+        page.get_by_role('button', name='Close dialog', exact=True).click()
+        page.get_by_role('button', name='Catalogue options').click()
+        page.get_by_role('radio', name='Light (default)', exact=True).check()
+        page.get_by_role('button', name='Close dialog', exact=True).click()
+        page.reload()
+        expect(page.locator('html')).to_have_attribute('data-theme', 'light')
+        assert page.locator('meta[name="theme-color"]').get_attribute('content') == '#ffffff'
+        page.set_viewport_size({'width': 320, 'height': 620})
+        page.evaluate("document.documentElement.style.fontSize='150%'")
+        page.get_by_role('button', name='Catalogue options').click()
+        assert page.locator('.theme-picker').evaluate('(el)=>el.scrollWidth<=el.clientWidth')
         page.get_by_role('button', name='Close dialog', exact=True).click()
         assert not errors, errors
         print(f'PASS [{engine}] mobile themes/layout, safe areas, Save/download, fullscreen names/swipes/bounds, zoom isolation, resizing, Home persistence', flush=True)

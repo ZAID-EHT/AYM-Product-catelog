@@ -22,12 +22,14 @@ import {
   ImageOff,
   LoaderCircle,
   MoreHorizontal,
+  Moon,
   RotateCcw,
   Search,
   Share2,
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
+  Sun,
   WifiOff,
   X,
   ZoomIn,
@@ -43,7 +45,16 @@ import {
   searchProducts,
   swipeDirection,
 } from './catalogue';
-import { persist, PROGRESS_KEY, readProgress, readSaved, SAVED_KEY } from './persistence';
+import {
+  persist,
+  PROGRESS_KEY,
+  readProgress,
+  readSaved,
+  SAVED_KEY,
+  readTheme,
+  THEME_KEY,
+  type Theme,
+} from './persistence';
 import { canShareFile, downloadCard, generateProductCard, nativeShare, productUrl } from './share';
 import { Modal } from './Modal';
 
@@ -151,6 +162,7 @@ function CatalogueApp({ catalogue }: { catalogue: Catalogue }) {
   const { products } = catalogue;
   const [homeIndex, setHomeIndex] = useState(() => restoreIndex(products, readProgress()));
   const [saved, setSaved] = useState(readSaved);
+  const [theme, setTheme] = useState(readTheme);
   const [route, setRoute] = useState(readRoute);
   const [query, setQuery] = useState('');
   const [savedQuery, setSavedQuery] = useState('');
@@ -220,6 +232,7 @@ function CatalogueApp({ catalogue }: { catalogue: Catalogue }) {
     const sync = (event: StorageEvent) => {
       if (event.key === SAVED_KEY) setSaved(readSaved());
       if (event.key === PROGRESS_KEY) setHomeIndex(restoreIndex(products, readProgress()));
+      if (event.key === THEME_KEY || event.key === null) setTheme(readTheme());
     };
     window.addEventListener('popstate', pop);
     window.addEventListener('online', connection);
@@ -232,6 +245,16 @@ function CatalogueApp({ catalogue }: { catalogue: Catalogue }) {
       window.removeEventListener('storage', sync);
     };
   }, [products]);
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', theme === 'dark' ? '#151b18' : '#ffffff');
+  }, [theme]);
+  function changeTheme(next: Theme) {
+    setTheme(next);
+    if (!persist(THEME_KEY, next)) setStorageError(true);
+  }
   useEffect(() => {
     if (
       !persist(PROGRESS_KEY, {
@@ -918,6 +941,22 @@ function CatalogueApp({ catalogue }: { catalogue: Catalogue }) {
           <p className="sheet-intro">
             Your browsing place and Saved collection are kept on this device.
           </p>
+          <fieldset className="theme-picker">
+            <legend>Appearance</legend>
+            {(['light', 'dark'] as const).map((choice) => (
+              <label key={choice} className={theme === choice ? 'selected' : ''}>
+                <input
+                  type="radio"
+                  name="theme"
+                  value={choice}
+                  checked={theme === choice}
+                  onChange={() => changeTheme(choice)}
+                />
+                {choice === 'light' ? <Sun size={20} /> : <Moon size={20} />}
+                <span>{choice === 'light' ? 'Light (default)' : 'Dark'}</span>
+              </label>
+            ))}
+          </fieldset>
           <button
             className="option-row"
             onClick={() => {
@@ -1026,6 +1065,10 @@ function CatalogueApp({ catalogue }: { catalogue: Catalogue }) {
           hasPrevious={hasPrevious}
           hasNext={hasNext}
           move={move}
+          saved={savedSet.has(product.id)}
+          save={() => toggleSave(product)}
+          share={() => setShareTarget(product)}
+          active={!shareTarget}
           position={`${(isHome ? homeIndex : collectionIndex) + 1} / ${collection.length.toLocaleString()}`}
           close={() => setZoomImage(null)}
         />
@@ -1174,6 +1217,10 @@ function ZoomSheet({
   hasNext,
   move,
   position,
+  saved,
+  save,
+  share,
+  active,
 }: {
   product: Product;
   initial: number;
@@ -1182,6 +1229,10 @@ function ZoomSheet({
   hasNext: boolean;
   move: (step: number) => void;
   position: string;
+  saved: boolean;
+  save: () => void;
+  share: () => void;
+  active: boolean;
 }) {
   const [photo, setPhoto] = useState(initial);
   const [scale, setScale] = useState(1);
@@ -1201,6 +1252,7 @@ function ZoomSheet({
     swipe.current = null;
   }, [product.id]);
   useEffect(() => {
+    if (!active) return;
     const keyboard = (event: KeyboardEvent) => {
       if (event.altKey || event.ctrlKey || event.metaKey) return;
       if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
@@ -1210,7 +1262,7 @@ function ZoomSheet({
     };
     window.addEventListener('keydown', keyboard);
     return () => window.removeEventListener('keydown', keyboard);
-  }, [move]);
+  }, [move, active]);
   function end(e: PointerEvent) {
     const start = swipe.current;
     swipe.current = null;
@@ -1227,9 +1279,26 @@ function ZoomSheet({
   }
   return (
     <Modal title="A closer look" close={close} wide fullscreen>
-      <h3 className="zoom-product-name" data-testid="fullscreen-product-name" aria-live="polite">
-        {product.name}
-      </h3>
+      <div className="zoom-product-heading">
+        <h3 className="zoom-product-name" data-testid="fullscreen-product-name" aria-live="polite">
+          {product.name}
+        </h3>
+        <div className="product-actions">
+          <button
+            className={`action-button ${saved ? 'is-saved' : ''}`}
+            aria-label={saved ? 'Remove from Saved' : 'Save product'}
+            aria-pressed={saved}
+            onClick={save}
+          >
+            <Bookmark size={20} fill={saved ? 'currentColor' : 'none'} />
+            <span>{saved ? 'Saved' : 'Save'}</span>
+          </button>
+          <button className="action-button" aria-label="Share product" onClick={share}>
+            <Share2 size={20} />
+            <span>Share</span>
+          </button>
+        </div>
+      </div>
       <div className="zoom-toolbar">
         <button
           className="icon-button soft"
