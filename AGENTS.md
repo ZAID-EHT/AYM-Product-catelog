@@ -6,3 +6,4 @@
 - Preserve the original Excel workbook and files in `images/`.
 - Default to the white/light theme regardless of the phone's system theme. Offer Light and Dark choices in the top options menu and remember an explicit choice.
 - Fullscreen product viewing shows the full product name with Save and Share actions beside it. Those actions always apply to the product currently being viewed.
+- Saved Excel exports include embedded photos, full names, codes and all source prices in one row per product. Export the whole Saved collection regardless of search/pagination. Keep the photo-and-name-only PNG export preference unchanged.

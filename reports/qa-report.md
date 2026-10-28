@@ -1,6 +1,12 @@
 # AYM catalogue — verified delivery
 
-Date: 20 October 2026 (Asia/Colombo)
+Date: 28 October 2026 (Asia/Colombo)
+
+## Saved Excel export (28 October 2026)
+
+Saved now offers Export all Saved to Excel followed by a fresh Download Excel action. One product per row includes embedded JPEG photos, full name, SKU, all original price columns, number/page/destination, displayed price/label, category/description and a product link. The complete Saved snapshot is exported regardless of filters or the 40-card display limit. Typed numeric prices retain two decimals and missing prices remain blank. Missing photos are marked. Failed photo requests expose retry and cannot silently produce an incomplete file. Closing cancels preparation without changing Saved or Home progress. The writer loads on demand and photos are processed with bounded concurrency; originals and PNG sharing are unchanged.
+
+Production validation: 18 unit/import checks and all 25 existing browser workflow checks pass. The new Excel tests pass in Chromium and WebKit, downloading and independently reading 48-row exports, verifying every row's names/codes/prices, embedded media and image anchors inside their rows, plus empty Saved, search/display-limit independence, cancellation, failed-photo retry, zero prices, leading-zero SKUs, literal formula-like names and a three-photo row. Artifact Tool imported the downloaded workbooks, inspected values and rendered normal/gallery previews for visual review. Evidence stays in test-results/. Browser-emulated downloads and workbook inspection do not claim physical iPhone or desktop Excel testing.
 
 ## Finger swipe correction
 

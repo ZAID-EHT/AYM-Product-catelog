@@ -60,6 +60,14 @@ Fallback rows explicitly explain that the main current price was not supplied. I
 - Storage errors show a visible session-only warning; the app continues in memory. Browser site-data clearing/private mode may remove persistence. No website can preserve localStorage after the user or operating system deletes site data.
 - Catalogue options include Continue Browsing and the explicit Start from Beginning action. Restart only resets Home progress.
 
+## Export Saved to Excel
+
+Open **Saved → Export all Saved to Excel**, wait for preparation, then choose **Download Excel**. This exports the entire Saved collection at the time you start, including products hidden by a search or the 40-card display limit. Closing the dialog cancels preparation without changing Saved or Home progress.
+
+The `.xlsx` contains one product per row with embedded photos, the full name, SKU, all three original price columns, workbook number/page, original destination references, the displayed price and its label, category/description and a product link. Prices are numeric with two decimal places; unavailable prices stay blank and missing photos are explicitly marked. Multiple photos fit within the same product row. Pictures are embedded as JPEGs, preserving their complete appearance and aspect ratio at up to 640px, so the file's photos work offline. Failed photo downloads show an error and Retry rather than silently producing an incomplete file.
+
+Excel creation runs locally in the browser. The Excel library loads only when an export is opened. Original source files and the existing photo-and-name-only PNG exports remain unchanged.
+
 ## Product sharing
 
 Share generates a **real PNG using Canvas**, not a screenshot. Following the user's saved preference, exported images contain **only the actual product photograph and full product name**. No added prices, currency, SKUs, branding, headers, footers or other text. Text already embedded in an original product photograph is preserved. The website still displays prices and codes. Cards are 1080px wide and grow vertically for long names. Images are served on the same origin; no third-party image CORS dependency is required.
@@ -93,6 +101,7 @@ npm run test:share
 npm run test:swipe
 npm run test:mobile
 npm run test:touch
+npm run test:excel
 ```
 
 `npm test` runs TypeScript behavior tests and Python importer/source-integrity tests. Python verifies all 2,274 source rows, every image association, missing/duplicate reporting, actual source SHA-256 checksums, and strict/fallback matching. TypeScript covers search (including 50,000 entries), gesture intent, price precision, corrupt/blocked storage and native file-sharing detection.
@@ -108,6 +117,8 @@ The focused regression command also verifies numeric SKU/workbook number collisi
 `npm run test:mobile` checks light/dark foregrounds, photo containment, separate bottom navigation at 393px widths and 620/650/852px heights, simulated safe areas, Save and PNG download, fullscreen names, swipes, keyboard/arrows, boundaries, pan isolation, resizing and independent Home progress in Chromium and WebKit. Screenshots are emulation evidence; physical iPhone testing remains a separate check.
 
 `npm run test:touch` adds browser-dispatched Chromium finger gestures and synthetic Touch Events fallback checks in Chromium/WebKit. It covers both directions on photos/names/details, pointer cancellation, vertical scrolling, returning from Search/Saved, missing photos, fullscreen, zoom isolation and boundaries. Synthetic WebKit checks exercise the touch handler directly; they are not physical Safari touch tests.
+
+`npm run test:excel` downloads and inspects real `.xlsx` exports in Chromium and WebKit: 48 saved records including products beyond the display limit, filters, exact numeric prices/blanks, internally embedded JPEGs, row-contained gallery anchors, leading-zero codes, literal text, missing photos, cancellation and retry. Exported files and test previews stay in `test-results/`.
 
 **No physical iPhone Safari or actual operating-system share sheet was tested.** WebKit automation on Windows approximates Safari’s rendering engine but is not a device test. Device-level safe areas, keyboard behavior, suspension, installation and share destinations still merit a real iPhone pass before a public launch.
 

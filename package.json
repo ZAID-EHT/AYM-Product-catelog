@@ -15,10 +15,12 @@
     "test:swipe": "python tests/swipe_test.py",
     "test:mobile": "python tests/mobile_viewer_test.py",
     "test:touch": "python tests/touch_gesture_test.py",
+    "test:excel": "python tests/saved_excel_test.py",
     "check": "npm run test && npm run build",
     "format": "prettier --write src index.html vite.config.ts tsconfig.json package.json README.md public/sw.js public/manifest.webmanifest"
   },
   "dependencies": {
+    "exceljs": "^4.4.0",
     "lucide-react": "^0.468.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"

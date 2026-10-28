@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Copy,
   Expand,
+  FileSpreadsheet,
   Grid2X2,
   Home,
   ImageOff,
@@ -58,6 +59,7 @@ import {
 import { canShareFile, downloadCard, generateProductCard, nativeShare, productUrl } from './share';
 import { Modal } from './Modal';
 import { useProductSwipe } from './useProductSwipe';
+import { SavedExportSheet } from './SavedExportSheet';
 
 function Photo({
   image,
@@ -177,6 +179,7 @@ function CatalogueApp({ catalogue }: { catalogue: Catalogue }) {
   const [jumpValue, setJumpValue] = useState('');
   const [jumpError, setJumpError] = useState('');
   const [shareTarget, setShareTarget] = useState<Product | null>(null);
+  const [exportProducts, setExportProducts] = useState<Product[] | null>(null);
   const [zoomImage, setZoomImage] = useState<{ photo: number } | null>(null);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [direction, setDirection] = useState(1);
@@ -217,7 +220,7 @@ function CatalogueApp({ catalogue }: { catalogue: Catalogue }) {
   const hasPrevious = (isHome ? homeIndex : collectionIndex) > 0;
   const hasNext =
     (isHome ? homeIndex : collectionIndex) < collection.length - 1 && collectionIndex >= 0;
-  const anyModal = options || jump || !!shareTarget || !!zoomImage;
+  const anyModal = options || jump || !!shareTarget || !!zoomImage || !!exportProducts;
 
   const navigate = useCallback((next: Route, replace = false) => {
     const url = new URL(location.href);
@@ -824,6 +827,18 @@ function CatalogueApp({ catalogue }: { catalogue: Catalogue }) {
                 </label>
               )}
             </div>
+            {route.section === 'saved' && (
+              <div className="saved-export-bar">
+                <button
+                  className="export-excel-button"
+                  disabled={!savedProducts.length}
+                  onClick={() => setExportProducts([...savedProducts])}
+                >
+                  <FileSpreadsheet size={20} /> Export all Saved to Excel
+                </button>
+                <p>Photos, names, codes and prices in one .xlsx file.</p>
+              </div>
+            )}
             <div className="results-heading">
               <span role="status">
                 {results.length.toLocaleString()} {results.length === 1 ? 'product' : 'products'}
@@ -1069,6 +1084,9 @@ function CatalogueApp({ catalogue }: { catalogue: Catalogue }) {
       )}
       {shareTarget && (
         <ShareSheet product={shareTarget} close={() => setShareTarget(null)} notify={setToast} />
+      )}
+      {exportProducts && (
+        <SavedExportSheet products={exportProducts} close={() => setExportProducts(null)} />
       )}
       {zoomImage && (
         <ZoomSheet
